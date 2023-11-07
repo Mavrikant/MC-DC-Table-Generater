@@ -1,1 +1,1 @@
-# MCDC-Table
+# MC/DC Table Generator
