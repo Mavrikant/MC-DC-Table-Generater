@@ -1,0 +1,227 @@
+<html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <title>Truth Table Generator</title>
+      <style>
+         /* Center the input box and button on the page */
+         .input-area {
+         text-align: center;
+         position: absolute;
+         top: 30px;
+         left: 50%;
+         transform: translate(-50%, -50%);
+         }
+         /* Style for the truth table */
+         table {
+         margin-top: 20px;
+         width: 100%;
+         border-collapse: collapse;
+         }
+         th, td {
+         border: 1px solid #ddd;
+         padding: 8px;
+         text-align: center;
+         }
+         th {
+         background-color: #f2f2f2;
+         }
+         .true-value {
+         background-color: green;
+         }
+         .false-value {
+         background-color: red;
+         }
+      </style>
+   </head>
+   <body>
+      <div class="input-area">
+         <input type="text" id="expression-input" placeholder="Enter Logical Expression" />
+         <button id="create-btn">Create</button>
+      </div>
+      </br></br>
+      <div id="truth-table"></div>
+      <div id="mcdc-table"></div>
+      <script>
+         // JavaScript to handle button click and generate truth table
+         document.getElementById('create-btn').addEventListener('click', function() {
+           const expression = document.getElementById('expression-input').value;
+           generateTruthTable(expression);
+         });
+         
+         function generateTruthTable(expression) {
+           // Step 1: Extract unique variables from the expression
+           const variables = [...new Set(expression.match(/[a-z]/g))];
+           const numVars = variables.length;
+         
+           // Step 2: Generate all combinations of truth values
+           const combinations = [];
+           for (let i = 0; i < Math.pow(2, numVars); i++) {
+             let combo = [];
+             for (let j = 0; j < numVars; j++) {
+               // Push true or false based on the bit at the jth position
+               combo.push(Boolean(i & (1 << j)));
+             }
+             combinations.push(combo.reverse());
+           }
+         
+           // Step 3: Evaluate expression for each combination
+           const results = combinations.map(combo => {
+             const evalExpression = combo.reduce((acc, val, idx) => {
+               const re = new RegExp(variables[idx], 'g');
+               return acc.replace(re, val);
+             }, expression);
+             try {
+               // Safely evaluate the logical expression
+               return Function(`"use strict"; return (${evalExpression});`)();
+             } catch (error) {
+               console.error('Error in evaluating expression:', error);
+               return undefined;
+             }
+           });
+         
+           // Step 4: Collect the truth table data
+           const truthTable = combinations.map((combo, idx) => {
+             const row = {};
+             variables.forEach((variable, index) => {
+               row[variable] = combo[index];
+             });
+             row['result'] = results[idx];
+             return row;
+           });
+         
+           return truthTable;
+         }
+         
+         
+         
+         
+         function createHtmlTableFromTruthTable(truthTable) {
+           // Start the table and add a header row
+           let html = '<table border="1"><thead><tr>';
+         
+           // Add header columns for each variable plus one for the result
+           const variables = Object.keys(truthTable[0]).filter(key => key !== 'result');
+           variables.forEach(variable => {
+             html += `<th>${variable.toUpperCase()}</th>`;
+           });
+           html += '<th>Result</th></tr></thead><tbody>';
+         
+           // Add a row for each combination in the truth table
+           truthTable.forEach(row => {
+             html += '<tr>';
+             variables.forEach(variable => {
+               const value = row[variable];
+               const className = value ? 'true-value' : 'false-value';
+               html += `<td class="${className}">${value ? 'T' : 'F'}</td>`;
+             });
+             const resultClassName = row.result ? 'true-value' : 'false-value';
+             html += `<td class="${resultClassName}">${row.result ? 'T' : 'F'}</td>`;
+             html += '</tr>';
+           });
+         
+           // Close the table
+           html += '</tbody></table>';
+         
+         return html;
+         }
+         
+         
+         
+         
+         
+         function createHtmlTableFromMCDCTable(mcdcPairs) {
+           const variables = mcdcPairs.length > 0 ? Object.keys(mcdcPairs[0].pair[0]).filter(key => key !== 'result') : [];
+         
+           let html = '<table border="1"><thead><tr><th>Condition</th>';
+         
+           variables.forEach(variable => {
+             html += `<th>${variable.toUpperCase()}</th>`;
+           });
+         
+           html += '<th>Result</th></tr></thead><tbody>';
+         
+           mcdcPairs.forEach(pair => {
+             html += '<tr>';
+             html += `<td rowspan="2">${pair.condition}</td>`;
+             variables.forEach(variable => {
+               const value = pair.pair[0][variable];
+               html += `<td class="${value ? 'true-value' : 'false-value'}">${value ? 'T' : 'F'}</td>`;
+             });
+             html += `<td class="${pair.pair[0].result ? 'true-value' : 'false-value'}">${pair.pair[0].result ? 'T' : 'F'}</td>`;
+             html += '</tr>';
+         
+             html += '<tr>';
+             variables.forEach(variable => {
+               const value = pair.pair[1][variable];
+               html += `<td class="${value ? 'true-value' : 'false-value'}">${value ? 'T' : 'F'}</td>`;
+             });
+             html += `<td class="${pair.pair[1].result ? 'true-value' : 'false-value'}">${pair.pair[1].result ? 'T' : 'F'}</td>`;
+             html += '</tr>';
+           });
+         
+           html += '</tbody></table>';
+         
+           return html;
+         }
+         
+         // Example usage and the rest of the implementation remain the same as previously shown
+         
+         
+         
+         
+         function findMCDCPairs(expression) {
+           // Generate the truth table (not shown here, use the previous generateTruthTable function)
+           // ...
+         
+           // Assume we have an array of objects representing the truth table, where each object has the format:
+           // { a: true, b: false, c: true, result: true }
+           let truthTable = generateTruthTable(expression);
+         
+           // This function would compare two truth values to find if they are MCDC pairs
+           const compareForMCDC = (entry1, entry2) => {
+             let differingCondition = null;
+             let conditionsCount = 0;
+             Object.keys(entry1).forEach(key => {
+               if (key !== 'result' && entry1[key] !== entry2[key]) {
+                 differingCondition = key;
+                 conditionsCount++;
+               }
+             });
+         
+             // To qualify as an MCDC pair, only one condition must differ and the result must also differ
+             return conditionsCount === 1 && entry1.result !== entry2.result ? differingCondition : null;
+           };
+         
+           // Find all MCDC pairs by comparing each row with all others
+           let mcdcPairs = [];
+           for (let i = 0; i < truthTable.length; i++) {
+             for (let j = i + 1; j < truthTable.length; j++) {
+               let differingCondition = compareForMCDC(truthTable[i], truthTable[j]);
+               if (differingCondition) {
+                 mcdcPairs.push({
+                   condition: differingCondition,
+                   pair: [truthTable[i], truthTable[j]]
+                 });
+               }
+             }
+           }
+         
+           return mcdcPairs;
+         }
+         
+         
+         // JavaScript to handle button click and generate truth table
+         document.getElementById('create-btn').addEventListener('click', function () {
+           const expression = document.getElementById('expression-input').value;
+           const truthTable = generateTruthTable(expression);
+           const mcdcPairs = findMCDCPairs(expression)
+           console.log(mcdcPairs)
+           const htmlTable = createHtmlTableFromTruthTable(truthTable);
+           const mcdchtmlTable = createHtmlTableFromMCDCTable(mcdcPairs);
+           document.getElementById('truth-table').innerHTML = htmlTable;
+           document.getElementById('mcdc-table').innerHTML = mcdchtmlTable;
+         });
+         
+      </script >
+   </body >
+</html >
