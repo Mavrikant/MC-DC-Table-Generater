@@ -1,3 +1,4 @@
+
 <html lang="en">
    <head>
       <meta charset="UTF-8">
@@ -48,49 +49,49 @@
            generateTruthTable(expression);
          });
          
-         function generateTruthTable(expression) {
-           // Step 1: Extract unique variables from the expression
-           const variables = [...new Set(expression.match(/[a-z]/g))];
-           const numVars = variables.length;
-         
-           // Step 2: Generate all combinations of truth values
-           const combinations = [];
-           for (let i = 0; i < Math.pow(2, numVars); i++) {
-             let combo = [];
-             for (let j = 0; j < numVars; j++) {
-               // Push true or false based on the bit at the jth position
-               combo.push(Boolean(i & (1 << j)));
-             }
-             combinations.push(combo.reverse());
-           }
-         
-           // Step 3: Evaluate expression for each combination
-           const results = combinations.map(combo => {
-             const evalExpression = combo.reduce((acc, val, idx) => {
-               const re = new RegExp(variables[idx], 'g');
-               return acc.replace(re, val);
-             }, expression);
-             try {
-               // Safely evaluate the logical expression
-               return Function(`"use strict"; return (${evalExpression});`)();
-             } catch (error) {
-               console.error('Error in evaluating expression:', error);
-               return undefined;
-             }
-           });
-         
-           // Step 4: Collect the truth table data
-           const truthTable = combinations.map((combo, idx) => {
-             const row = {};
-             variables.forEach((variable, index) => {
-               row[variable] = combo[index];
-             });
-             row['result'] = results[idx];
-             return row;
-           });
-         
-           return truthTable;
-         }
+        function generateTruthTable(expression) {
+  // Step 1: Extract unique variables from the expression
+  const variables = [...new Set(expression.match(/[a-zA-Z]/g))];
+  const numVars = variables.length;
+
+  // Step 2: Generate all combinations of truth values
+  const combinations = [];
+  for (let i = 0; i < Math.pow(2, numVars); i++) {
+    let combo = [];
+    for (let j = 0; j < numVars; j++) {
+      // Push true or false based on the bit at the jth position
+      combo.push(i & (1 << j) ? true : false);
+    }
+    combinations.push(combo.reverse());
+  }
+
+  // Step 3: Evaluate expression for each combination
+  const results = combinations.map(combo => {
+    const evalExpression = combo.reduce((acc, val, idx) => {
+      const re = new RegExp(`\\b${variables[idx]}\\b`, 'g');
+      return acc.replace(re, val ? 'true' : 'false');
+    }, expression);
+    try {
+      // Safely evaluate the logical expression using new Function
+      return new Function(`"use strict"; return (${evalExpression});`)();
+    } catch (error) {
+      console.error('Error in evaluating expression:', error);
+      return undefined;
+    }
+  });
+
+  // Step 4: Collect the truth table data
+  const truthTable = combinations.map((combo, idx) => {
+    const row = {};
+    variables.forEach((variable, index) => {
+      row[variable] = combo[index];
+    });
+    row['result'] = results[idx];
+    return row;
+  });
+
+  return truthTable;
+}
          
          
          
