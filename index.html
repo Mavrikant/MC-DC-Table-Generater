@@ -43,6 +43,45 @@
       <div id="truth-table"></div>
       <div id="mcdc-table"></div>
       <script>
+      
+document.getElementById('create-btn').addEventListener('click', function() {
+  const expressionInput = document.getElementById('expression-input');
+  const expression = expressionInput.value;
+  if (!isValidExpression(expression)) {
+    alert('Invalid logical expression! Please check your input for invalid characters or unmatched parentheses and try again.');
+    expressionInput.focus(); // Focus the input box to prompt user for correction
+    return; // Prevent further execution
+  }
+  generateTruthTable(expression);
+});
+
+function isValidExpression(expression) {
+  // Check if the expression contains only allowed characters
+  if (!/^[a-zA-Z\s()&|!]+$/.test(expression)) {
+    return false; // Contains invalid characters
+  }
+
+  // Check for balanced parentheses
+  return areParenthesesBalanced(expression);
+}
+
+function areParenthesesBalanced(expression) {
+  const stack = [];
+  for (let i = 0; i < expression.length; i++) {
+    const char = expression[i];
+    if (char === '(') {
+      stack.push(char);
+    } else if (char === ')') {
+      if (stack.length === 0) {
+        return false; // No matching opening parenthesis
+      }
+      stack.pop(); // Pop the last opening parenthesis from the stack
+    }
+  }
+  return stack.length === 0; // If stack is empty, parentheses are balanced
+}
+
+
          // JavaScript to handle button click and generate truth table
          document.getElementById('create-btn').addEventListener('click', function() {
            const expression = document.getElementById('expression-input').value;
